@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trending Focus | 100 ข่าวฮิตประจำวัน</title>
+    <!-- นำเข้า Tailwind CSS สำหรับตกแต่งดีไซน์สไตล์ Minimalist -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap');
+        body { font-family: 'Sarabun', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-5xl text-gray-900 min-h-screen">
+
+    <!-- Header Section -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-xs">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-[#1B2F9F]">🌐 TRENDING FOCUS</h1>
+                <p class="text-xs text-gray-500 mt-1">แหล่งรวมหัวข้อข่าวที่เป็นกระแส อัปเดตอัตโนมัติ 4 รอบต่อวัน</p>
+            </div>
+            <div class="text-right">
+                <span id="latest-round" class="bg-emerald-50 text-emerald-700 text-xs font-medium px-3 py-1.5 rounded-full border border-emerald-200">
+                    🔄 กำลังโหลดรอบเวลาล่าสุด...
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        
+        <!-- AI Daily Insights Buffer (กล่องสรุปภาพรวม สามารถต่อยอด AI ได้ในอนาคต) -->
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8">
+            <h3 class="text-sm font-semibold text-[#1B2F9F] flex items-center gap-2 mb-2">
+                ✨ AI DAILY INSIGHTS <span class="text-xs font-normal text-gray-500">(แนวโน้มกระแสรอบล่าสุด)</span>
+            </h3>
+            <p id="ai-insight-text" class="text-sm text-gray-700 leading-relaxed">
+                กำลังวิเคราะห์หัวข้อข่าวและจัดกลุ่มกระแสสังคมในรอบเวลานี้... ข้อมูลจะแสดงผลเมื่อโหลดข่าวเสร็จสิ้น
+            </p>
+        </div>
+
+        <!-- Filters Section (เมนูตัวกรองหมวดหมู่) -->
+        <div class="mb-8">
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">คัดกรองตามหมวดหมู่ข่าว</h2>
+            <div class="flex flex-wrap gap-2" id="category-filters">
+                <button onclick="filterCategory('ทั้งหมด')" id="btn-cat-ทั้งหมด" class="cat-btn px-4 py-2 text-xs font-medium rounded-lg bg-[#1B2F9F] text-white transition-all">ทั้งหมด</button>
+                <button onclick="filterCategory('ข่าวเด่น')" id="btn-cat-ข่าวเด่น" class="cat-btn px-4 py-2 text-xs font-medium rounded-lg bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all">ข่าวเด่น</button>
+                <button onclick="filterCategory('ข่าวทั่วไป')" id="btn-cat-ข่าวทั่วไป" class="cat-btn px-4 py-2 text-xs font-medium rounded-lg bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all">ข่าวทั่วไป</button>
+                <button onclick="filterCategory('เศรษฐกิจ')" id="btn-cat-เศรษฐกิจ" class="cat-btn px-4 py-2 text-xs font-medium rounded-lg bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all">เศรษฐกิจ</button>
+                <button onclick="filterCategory('เทคโนโลยี')" id="btn-cat-เทคโนโลยี" class="cat-btn px-4 py-2 text-xs font-medium rounded-lg bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all">เทคโนโลยี</button>
+            </div>
+        </div>
+
+        <!-- News Feed List -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-xs divide-y divide-gray-100" id="news-feed-list">
+            <!-- ข้อความระหว่างโหลดข้อมูล -->
+            <div class="p-12 text-center text-gray-400 text-sm">
+                <div class="animate-spin inline-block w-6 h-6 border-3 border-current border-t-transparent text-[#1B2F9F] rounded-full mb-3" role="status"></div>
+                <p>กำลังเชื่อมต่อฐานข้อมูล Google Sheets...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="text-center py-8 text-xs text-gray-400 border-t border-gray-200 mt-12 bg-white">
+        © 2026 Trending Focus WebApp. จัดทำขึ้นเพื่อรวบรวมกระแสข่าวประจำวันอย่างรวดเร็ว
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // ⚠️ วางลิงก์ Web App URL ของคุณที่ได้จาก Google Apps Script ในเครื่องหมายคำพูดด้านล่างนี้ครับ
+        const API_URL = "https://script.google.com/macros/s/AKfycbyEb7xnKjoXC0hX5rvE983rkusRYh7Kj5tQJFrGAlM3OWjpORktHvssT8pppq3I2HKD/exec";
+
+        let allNewsData = []; // ตัวแปรเก็บข้อมูลข่าวทั้งหมดที่ดึงมาจากฐานข้อมูล
+
+// แก้ไขฟังก์ชันโหลดข้อมูลเดิม ให้ดึงโครงสร้างใหม่ที่มี AI Summary ติดมาด้วย
+        async function fetchNewsData() {
+            try {
+                const response = await fetch(API_URL);
+                const responseData = await response.json(); // ข้อมูลก้อนใหญ่
+                
+                // แยกเก็บรายการข่าวลงในตัวแปรหลัก
+                allNewsData = responseData.newsList; 
+                
+                // 🌟 ดึงบทสรุปจริงจาก Gemini API มาแสดงผลในกล่องสีฟ้าด้านบนทันที!
+                document.getElementById('ai-insight-text').innerText = responseData.aiSummary;
+
+                if (allNewsData.length > 0) {
+                    // แสดงรอบเวลาล่าสุดที่มุมบนขวา
+                    document.getElementById('latest-round').innerText = `อัปเดตล่าสุด: ${allNewsData[0].round}`;
+                    // เริ่มแสดงผลข้อมูลครั้งแรก (โชว์ข่าว "ทั้งหมด")
+                    filterCategory('ทั้งหมด');
+                } else {
+                    document.getElementById('news-feed-list').innerHTML = `<div class="p-8 text-center text-gray-500">ไม่พบข้อมูลข่าวในระบบ</div>`;
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                document.getElementById('news-feed-list').innerHTML = `
+                    <div class="p-8 text-center text-red-500 text-sm">
+                        ⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อข้อมูล กรุณาตรวจสอบการตั้งค่าสิทธิ์ Deployment หรือลิงก์ API ของคุณ
+                    </div>`;
+            }
+        }
+
+        // ฟังก์ชันในการกรองหมวดหมู่และแสดงผลย้อนหลังตามไอเดียของคุณ (Fallback ย้อนหลัง เรียงจากใหม่ไปเก่า จำกัด 100 ข่าว)
+        function filterCategory(categoryName) {
+            // 1. เปลี่ยนสไตล์ปุ่มที่ถูกคลิกเลือก
+            const buttons = document.querySelectorAll('.cat-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-[#1B2F9F]', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-600', 'border-gray-200');
+            });
+            const activeBtn = document.getElementById(`btn-cat-${categoryName}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
+                activeBtn.classList.add('bg-[#1B2F9F]', 'text-white');
+            }
+
+            // 2. กรองข้อมูลตามหมวดหมู่
+            let filteredNews = allNewsData;
+            if (categoryName !== 'ทั้งหมด') {
+                filteredNews = allNewsData.filter(news => news.category === categoryName);
+            }
+
+            // 3. เรียงลำดับจากใหม่สุดไปเก่าสุด และจำกัดไว้ที่สูงสุด 100 ข่าว (ตามไอเดียที่คุณเสนอแนะ)
+            // หมายเหตุ: ข้อมูลถูกเรียงมาตั้งแต่หลังบ้านแล้ว โค้ดนี้จะดึง 100 ข่าวแรกที่เจอในหมวดนั้นๆ ทันที
+            const limitedNews = filteredNews.slice(0, 100);
+
+            // 4. เรนเดอร์ HTML ออกมาแสดงผลบนหน้าเว็บ
+            const container = document.getElementById('news-feed-list');
+            if (limitedNews.length === 0) {
+                container.innerHTML = `<div class="p-12 text-center text-gray-400 text-sm">ไม่มีข่าวสารในหมวดหมู่นี้ในระบบขณะนี้</div>`;
+                return;
+            }
+
+            let htmlContent = "";
+            limitedNews.forEach((news, index) => {
+                // แปลงฟอร์แมตเวลาบอทให้อ่านง่ายขึ้น
+                const scrapedTime = new Date(news.scraped_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                
+                // การสลับสีป้าย Tag ตามแหล่งที่มาข่าว
+                const sourceBadgeColor = news.source === "ไทยรัฐ" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-blue-50 text-blue-700 border-blue-100";
+
+                htmlContent += `
+                    <div class="p-5 hover:bg-gray-50 transition-colors flex items-start gap-4">
+                        <div class="flex-none text-xs font-bold text-gray-300 w-6 mt-1 text-center">
+                            ${String(index + 1).padStart(2, '0')}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <span class="text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-sm border ${sourceBadgeColor}">
+                                    ${news.source}
+                                </span>
+                                <span class="text-xs font-medium text-gray-400">
+                                    • หมวด: ${news.category}
+                                </span>
+                                <span class="text-xs text-gray-400">
+                                    • เก็บข้อมูลเวลา ${scrapedTime} น. (${news.round})
+                                </span>
+                            </div>
+                            <h3 class="text-base font-medium text-gray-900 leading-snug hover:text-[#1B2F9F] transition-colors">
+                                <a href="${news.url}" target="_blank" rel="noopener noreferrer">${news.title}</a>
+                            </h3>
+                            <div class="mt-2.5">
+                                <a href="${news.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-xs font-medium text-[#1B2F9F] hover:underline gap-1">
+                                    อ่านเนื้อหาข่าวเพิ่มเติม 
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = htmlContent;
+        }
+
+        // ฟังก์ชันจำลองข้อความสรุปกระแสสังคมตามจำนวนสถิติข่าวจริงที่ดึงได้
+        function generateMockInsight(data) {
+            const total = data.length;
+            const ecoCount = data.filter(n => n.category === 'เศรษฐกิจ').length;
+            const techCount = data.filter(n => n.category === 'เทคโนโลยี').length;
+            
+            let topTrend = "ข่าวทั่วไปและประเด็นร้อนแรงรายวัน";
+            if (ecoCount > techCount && ecoCount > 5) topTrend = "ความเคลื่อนไหวทางเศรษฐกิจ ปากท้อง และการเงิน";
+            if (techCount > ecoCount && techCount > 5) topTrend = "นวัตกรรมและเทคโนโลยีใหม่ๆ ที่เปิดตัวในต่างประเทศ";
+
+            document.getElementById('ai-insight-text').innerText = 
+                `📊 จากฐานข้อมูลข่าวล่าสุดจำนวน ${total} ข่าวที่ระบบ Clawbot ตรวจพบ กระแสหลักในชั่วโมงนี้ให้น้ำหนักไปที่เรื่อง "${topTrend}" เป็นพิเศษ โดยมีสัดส่วนข่าวเศรษฐกิจ ${ecoCount} ข่าว และข่าวไอที/เทคโนโลยี ${techCount} ข่าว ผู้ใช้งานสามารถเลือกกดสลับแท็บหมวดหมู่ด้านล่างเพื่อไล่อ่านข่าวย้อนหลังแบบเรียงลำดับเวลาได้ทันทีครับ`;
+        }
+
+        // เริ่มต้นการทำงานเมื่อโหลดหน้าเว็บสำเร็จ
+        window.onload = fetchNewsData;
+    </script>
+</body>
+</html>
